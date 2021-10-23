@@ -12,3 +12,5 @@ C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Business\obj\Debug\netc
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Business\obj\Debug\netcoreapp3.1\Business.csproj.CopyComplete
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Business\obj\Debug\netcoreapp3.1\Business.dll
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Business\obj\Debug\netcoreapp3.1\Business.pdb
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Business\bin\Debug\netcoreapp3.1\Core.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Business\bin\Debug\netcoreapp3.1\Core.pdb
