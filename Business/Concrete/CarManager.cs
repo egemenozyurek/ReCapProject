@@ -26,7 +26,7 @@ namespace Business.Concrete
             }
             _carDal.Add(car);
 
-            return new SuccessResult(Messages.CarAdded);
+            return new SuccessResult(Messages.Added);
         }
 
         public IDataResult<List<Car>> GetAll()
