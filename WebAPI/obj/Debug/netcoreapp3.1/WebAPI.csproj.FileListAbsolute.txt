@@ -67,3 +67,13 @@ C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\obj\Debug\netcor
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\obj\Debug\netcoreapp3.1\WebAPI.dll
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\obj\Debug\netcoreapp3.1\WebAPI.pdb
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\obj\Debug\netcoreapp3.1\WebAPI.genruntimeconfig.cache
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Autofac.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Autofac.Extensions.DependencyInjection.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Autofac.Extras.DynamicProxy.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Castle.Core.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\FluentValidation.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Microsoft.OpenApi.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\obj\Debug\netcoreapp3.1\WebAPI.MvcApplicationPartsAssemblyInfo.cs

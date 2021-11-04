@@ -1,19 +1,9 @@
-using Business.Abstract;
-using Business.Concrete;
-using DataAccess.Abstract;
-using DataAccess.Concrete.EntityFramework;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.OpenApi.Models;
 
 namespace WebAPI
 {
@@ -30,18 +20,23 @@ namespace WebAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddSingleton<ICarDal, EFCarDal>();
-            services.AddSingleton<ICarService, CarManager>();
-            services.AddSingleton<IBrandDal, EFBrandDal>();
-            services.AddSingleton<IBrandService, BrandManager>();
-            services.AddSingleton<IColorDal, EFColorDal>();
-            services.AddSingleton<IColorService, ColorManager>();
-            services.AddSingleton<ICustomerDal, EFCustomerDal>();
-            services.AddSingleton<ICustomerService, CustomerManager>();
-            services.AddSingleton<IUserDal, EFUserDal>();
-            services.AddSingleton<IUserService, UserManager>();
-            services.AddSingleton<IRentalDal, EFRentalDal>();
-            services.AddSingleton<IRentalService, RentalManager>();
+            //services.AddSingleton<ICarDal, EFCarDal>();
+            //services.AddSingleton<ICarService, CarManager>();
+            //services.AddSingleton<IBrandDal, EFBrandDal>();
+            //services.AddSingleton<IBrandService, BrandManager>();
+            //services.AddSingleton<IColorDal, EFColorDal>();
+            //services.AddSingleton<IColorService, ColorManager>();
+            //services.AddSingleton<ICustomerDal, EFCustomerDal>();
+            //services.AddSingleton<ICustomerService, CustomerManager>();
+            //services.AddSingleton<IUserDal, EFUserDal>();
+            //services.AddSingleton<IUserService, UserManager>();
+            //services.AddSingleton<IRentalDal, EFRentalDal>();
+            //services.AddSingleton<IRentalService, RentalManager>();
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebAPI", Version = "v1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,6 +45,8 @@ namespace WebAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebAPI v1"));
             }
 
             app.UseHttpsRedirection();
