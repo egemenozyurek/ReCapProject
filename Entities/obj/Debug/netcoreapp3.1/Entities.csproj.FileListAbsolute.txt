@@ -10,3 +10,4 @@ C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Entities\obj\Debug\netc
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Entities\bin\Debug\netcoreapp3.1\Core.dll
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Entities\bin\Debug\netcoreapp3.1\Core.pdb
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Entities\obj\Debug\netcoreapp3.1\Entities.csproj.CopyComplete
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Entities\obj\Debug\netcoreapp3.1\Entities.GeneratedMSBuildEditorConfig.editorconfig

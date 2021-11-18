@@ -7,3 +7,4 @@ C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Core\obj\Debug\netcorea
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Core\obj\Debug\netcoreapp3.1\Core.csproj.CoreCompileInputs.cache
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Core\obj\Debug\netcoreapp3.1\Core.dll
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Core\obj\Debug\netcoreapp3.1\Core.pdb
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Core\obj\Debug\netcoreapp3.1\Core.GeneratedMSBuildEditorConfig.editorconfig

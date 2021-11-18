@@ -17,5 +17,9 @@ namespace Business.Constants
         public static string CarDailyPriceInvalid = "Günlük fiyat değeri 0 dan büyük olmalıdır. Ekleme işlemi başarısız.";
         public static string GetAll = "Tüm veriler listelendi";
         public static string RentalReturnDate = "Şu an istediğiniz araç kirada olduğu için işleminiz başarısız.";
+        public static string ImageAdded = "Araç resmi veritabanına eklenmiştir.";
+        public static string ImageDeleted = "Araç resmi silinmiştir.";
+        public static string ImageUpdated = "Araç resmi güncellenmiştir.";
+        public static string CarImageCountExceeded = "Her aracın yalnızca 5 resmi olabilir.";
     }
 }

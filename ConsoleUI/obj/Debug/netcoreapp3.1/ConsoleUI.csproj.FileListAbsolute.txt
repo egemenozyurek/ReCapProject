@@ -73,3 +73,4 @@ C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\ConsoleUI\bin\Debug\net
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\ConsoleUI\bin\Debug\netcoreapp3.1\Autofac.Extras.DynamicProxy.dll
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\ConsoleUI\bin\Debug\netcoreapp3.1\Castle.Core.dll
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\ConsoleUI\bin\Debug\netcoreapp3.1\FluentValidation.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\ConsoleUI\obj\Debug\netcoreapp3.1\ConsoleUI.GeneratedMSBuildEditorConfig.editorconfig
