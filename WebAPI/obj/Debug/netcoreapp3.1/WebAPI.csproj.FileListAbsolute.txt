@@ -78,3 +78,8 @@ C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcor
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.SwaggerUI.dll
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\obj\Debug\netcoreapp3.1\WebAPI.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\obj\Debug\netcoreapp3.1\WebAPI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Microsoft.Configuration.ConfigurationBuilders.Base.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Microsoft.Configuration.ConfigurationBuilders.Json.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\Microsoft.Extensions.Configuration.Binder.dll
+C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\WebAPI\bin\Debug\netcoreapp3.1\System.Runtime.CompilerServices.Unsafe.dll

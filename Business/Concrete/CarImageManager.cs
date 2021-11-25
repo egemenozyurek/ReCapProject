@@ -35,14 +35,14 @@ namespace Business.Concrete
             carImage.ImagePath = info.FullName;
             carImage.Date = info.CreationTime;
             _carImageDal.Add(carImage);
-            return new SuccessResult(Messages.ImageAdded);
+            return new SuccessResult();
         }
 
         public IResult Delete(CarImage carImage)
         {
             _fileManipulateService.Delete(carImage.ImagePath);
             _carImageDal.Delete(carImage);
-            return new SuccessResult(Messages.ImageDeleted);
+            return new SuccessResult();
         }
 
         public IDataResult<List<CarImage>> GetAll()
@@ -68,7 +68,7 @@ namespace Business.Concrete
             carImage.ImagePath = info.FullName;
             carImage.Date = info.CreationTime;
             _carImageDal.Update(carImage);
-            return new SuccessResult(Messages.ImageUpdated);
+            return new SuccessResult();
         }
 
         private IResult CheckIfCarImageCountExceed(int carId)
@@ -76,7 +76,7 @@ namespace Business.Concrete
             var result = _carImageDal.GetAll(i => i.CarId == carId).Count;
             if (result >= 5)
             {
-                return new ErrorResult(Messages.CarImageCountExceeded);
+                return new ErrorResult();
             }
             return new SuccessResult();
         }
