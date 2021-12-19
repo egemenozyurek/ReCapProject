@@ -1,94 +1,116 @@
 ﻿using Business.Abstract;
-using Business.Constants;
+using Business.Constants.Messages;
+using Business.Validations.FluentValidation;
+using Core.Aspects.Autofac.Validation;
 using Core.Utilities.Business;
-using Core.Utilities.FileManipulate;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
+using Entities.DTOs;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Business.Concrete
 {
     public class CarImageManager : ICarImageService
     {
         ICarImageDal _carImageDal;
-        IFileManipulateService _fileManipulateService;
+        IUploadService _uploadService;
 
-        public CarImageManager(ICarImageDal carImageDal, IFileManipulateService fileManipulateService)
+        public CarImageManager(ICarImageDal carImageDal, IUploadService uploadService)
         {
             _carImageDal = carImageDal;
-            _fileManipulateService = fileManipulateService;
+            _uploadService = uploadService;
         }
-
-        public IResult Add(CarImage carImage)
+        //resim ekle
+        [ValidationAspect(typeof(CarImagesValidator))]
+        public IResult Add(CarImageForAddDto carImageForAddDto)
         {
-            var result = BusinessRuler.Run(CheckIfCarImageCountExceed(carImage.CarId));
+            IResult result = BusinessRuler.Run(
+                CheckIfCarImageLimit(carImageForAddDto.CarId)
+            );
             if (result != null)
             {
                 return result;
             }
-            var info = _fileManipulateService.Add(carImage.ImagePath);
 
-            carImage.ImagePath = info.FullName;
-            carImage.Date = info.CreationTime;
+            CarImage carImage = new CarImage();
+            carImage.CarId = carImageForAddDto.CarId;
+            carImage.ImagePath = _uploadService.AddFromBase64(carImageForAddDto.Image);
+            carImage.Date = DateTime.Now;
             _carImageDal.Add(carImage);
-            return new SuccessResult();
+            return new SuccessResult(CarImagesMessages.CarImageAdded);
         }
-
-        public IResult Delete(CarImage carImage)
+        //resim sil
+        [ValidationAspect(typeof(CarImagesValidator))]
+        public IResult Delete(int id)
         {
-            _fileManipulateService.Delete(carImage.ImagePath);
+            var carImage = _carImageDal.Get(c => c.Id == id);
+            if (carImage == null) return new ErrorResult();
+            _uploadService.Remove(carImage.ImagePath);
             _carImageDal.Delete(carImage);
-            return new SuccessResult();
+            return new SuccessResult(CarImagesMessages.CarImageDeleted);
+        }
+        //resim güncelle
+        [ValidationAspect(typeof(CarImagesValidator))]
+        public IResult Update(CarImageForUpdateDto carImageForUpdateDto)
+        {
+            var carImage = _carImageDal.Get(c => c.Id == carImageForUpdateDto.CarId);
+            string newPath = _uploadService.UpdateFromBase64(carImage.ImagePath, carImageForUpdateDto.Image);
+            carImage.ImagePath = newPath;
+            carImage.Date = DateTime.Now;
+            _carImageDal.Update(carImage);
+            return new SuccessResult(CarImagesMessages.CarImageUpdated);
         }
 
+        //resimlerin car-id lerini getir
+        public IDataResult<List<CarImage>> GetAllByCarId(int carId)
+        {
+            var result = BusinessRuler.Run(CheckCarImage(carId));
+            if (result != null)
+            {
+                return new ErrorDataResult<List<CarImage>>(GetDefaultImage(carId).Data);
+            }
+            return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll(c => c.CarId == carId));
+        }
+        //resimlerin idlerini getir
+        public IDataResult<CarImage> GetByImageId(int imageId)
+        {
+            return new SuccessDataResult<CarImage>(_carImageDal.Get(c => c.Id == imageId));
+        }
+        //resimlerin hepsini listele
         public IDataResult<List<CarImage>> GetAll()
         {
             return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll());
         }
-
-        public IDataResult<List<CarImage>> GetByCarId(int carId)
+        //CarImage Limitini Kontrol Edin
+        private IResult CheckIfCarImageLimit(int carId)
         {
-            var result = CheckIfTheCarHasAnyImage(carId);
-            if (!result.Success)
-            {
-                return new SuccessDataResult<List<CarImage>>(new List<CarImage> { new CarImage { ImagePath = @"C:\Users\Asus\Desktop\EgemenProje(DOKUNMA!)\ReCapProject\Business\Images\CarImages\logo.jpg" } });
-            }
-            return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll(c => c.CarId == carId));
-        }
-
-        public IResult Update(CarImage carImage)
-        {
-            var oldCarImage = _carImageDal.Get(ci => ci.Id == carImage.Id);
-
-            var info = _fileManipulateService.Update(oldCarImage.ImagePath, carImage.ImagePath);
-            carImage.ImagePath = info.FullName;
-            carImage.Date = info.CreationTime;
-            _carImageDal.Update(carImage);
-            return new SuccessResult();
-        }
-
-        private IResult CheckIfCarImageCountExceed(int carId)
-        {
-            var result = _carImageDal.GetAll(i => i.CarId == carId).Count;
+            var result = _carImageDal.GetAll(c => c.CarId == carId).Count;
             if (result >= 5)
             {
                 return new ErrorResult();
             }
             return new SuccessResult();
         }
-
-        private IResult CheckIfTheCarHasAnyImage(int carId)
+        //Varsayılan Resmi Al
+        private IDataResult<List<CarImage>> GetDefaultImage(int carId)
         {
-            var result = _carImageDal.GetAll(c => c.CarId == carId).Any();
-            if (!result)
-            {
-                return new ErrorResult();
-            }
-            return new SuccessResult();
+
+            List<CarImage> carImage = new List<CarImage>();
+            carImage.Add(new CarImage { CarId = carId, Date = DateTime.Now, ImagePath = "DefaultImage.jpg" });
+            return new SuccessDataResult<List<CarImage>>(carImage);
         }
+        //CarImage'ı Kontrol Et
+        private IResult CheckCarImage(int carId)
+        {
+            var result = _carImageDal.GetAll(c => c.CarId == carId).Count;
+            if (result > 0)
+            {
+                return new SuccessResult();
+            }
+            return new ErrorResult();
+        }
+
     }
 }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Business.Constants;
+using Business.Constants.Messages;
 using Castle.DynamicProxy;
 using Core.Extensions;
 using Core.IoC;
@@ -35,7 +33,7 @@ namespace Business.BusinessAspects.Autofac
                     return;
                 }
             }
-            throw new Exception(Messages.AuthorizationDenied);
+            throw new Exception(CarMessages.AuthorizationDenied);
         }
     }
 }

@@ -1,11 +1,14 @@
-﻿using Business.Abstract;
-using Business.Constants;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Business.Abstract;
+using Business.Constants.Messages;
+using Business.Validations.FluentValidation;
+using Core.Aspects.Autofac.Transaction;
+using Core.Aspects.Autofac.Validation;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Entities.DTOs;
 
 namespace Business.Concrete
 {
@@ -17,47 +20,79 @@ namespace Business.Concrete
         {
             _rentalDal = rentalDal;
         }
-
-        public IResult Add(Rental rental)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IResult Delete(Rental rental)
-        {
-            _rentalDal.Delete(rental);
-            return new SuccessResult();
-        }
-
         public IDataResult<List<Rental>> GetAll()
         {
-            return new SuccessDataResult<List<Rental>>(_rentalDal.GetAll());
+            return new SuccessDataResult<List<Rental>>(_rentalDal.GetAll(), RentalMessages.RentalListed);
         }
-
-        public IDataResult<Rental> GetById(int rentalId)
+        public IDataResult<List<Rental>> GetById(int id)
         {
-            return new SuccessDataResult<Rental>(_rentalDal.Get(r => r.Id == rentalId));
+            return new SuccessDataResult<List<Rental>>(_rentalDal.GetAll(r => r.Id == id));
         }
-
-        public IResult Insert(Rental rental)
+        public IResult CheckReturnDate(int carId)
         {
-            var rentalDate = _rentalDal.Get(r => r.CarId == rental.CarId);
-            if (rentalDate == null || rentalDate.ReturnDate < DateTime.Now.Date)
+            var result = _rentalDal.GetCarRentalDetails();
+            if (result.Count > 0)
             {
-                _rentalDal.Add(rental);
-                return new SuccessResult();
+                return new ErrorResult(RentalMessages.RentalAddFailed);
             }
-            else
-            {
-                return new ErrorResult();
-            }
-
+            return new SuccessResult(RentalMessages.RentalAdded);
         }
+        public IResult UpdateReturnDate(Rental rental)
+        {
+            var result = _rentalDal.GetAll(p => p.Id == rental.Id);
+            var updateRental = result.LastOrDefault();
 
+            if (updateRental != null)
+            {
+                return new ErrorResult(RentalMessages.RentalUpdateFailed);
+            }
+
+            updateRental.ReturnDate = rental.ReturnDate;
+            _rentalDal.Update(updateRental);
+            return new SuccessResult(RentalMessages.RentalUpdate);
+        }
+        public IDataResult<List<CarRentalDetailDto>> GetRentalCarDetails()
+        {
+            return new SuccessDataResult<List<CarRentalDetailDto>>(_rentalDal.GetCarRentalDetails(), RentalMessages.RentalListed);
+        }
+        [ValidationAspect(typeof(RentalValidator))]
+        public IResult Add(Rental rental)
+        {
+            var result = CheckReturnDate(rental.CarId);
+            if (!result.Success && rental.ReturnDate < rental.RentDate)
+            {
+                return new ErrorResult(RentalMessages.RentalAddFailed);
+            }
+
+            _rentalDal.Add(rental);
+            return new SuccessResult(RentalMessages.RentalAdded);
+        }
         public IResult Update(Rental rental)
         {
+            if (rental.Id! > 0)
+            {
+                return new ErrorResult(RentalMessages.RentalUpdateFailed);
+            }
+
             _rentalDal.Update(rental);
-            return new SuccessResult();
+            return new SuccessResult(RentalMessages.RentalUpdate);
+        }
+        public IResult Delete(Rental rental)
+        {
+            if (rental.Id < 1)
+            {
+                return new ErrorResult(RentalMessages.RentalDeleteFailed);
+            }
+
+            _rentalDal.Delete(rental);
+            return new SuccessResult(RentalMessages.RentalDeleted);
+        }
+        [TransactionScopeAspect]
+        public IResult TransactionalOperation(Rental rental)
+        {
+            _rentalDal.Update(rental);
+            _rentalDal.Add(rental);
+            return new SuccessResult(RentalMessages.RentalUpdate);
         }
     }
 }

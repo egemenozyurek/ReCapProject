@@ -1,17 +1,17 @@
 ﻿using Core.Utilities.Results;
 using Entities.Concrete;
-using System;
+using Entities.DTOs;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Business.Abstract
 {
     public interface ICarImageService
     {
-        IResult Add(CarImage carImage);
-        IResult Update(CarImage carImage);
-        IResult Delete(CarImage carImage);
+        IResult Add(CarImageForAddDto carImageForAddDto);
+        IResult Update(CarImageForUpdateDto carImageForUpdateDto);
+        IResult Delete(int id);
+        IDataResult<CarImage> GetByImageId(int imageId);
         IDataResult<List<CarImage>> GetAll();
-        IDataResult<List<CarImage>> GetByCarId(int carId);
+        IDataResult<List<CarImage>> GetAllByCarId(int carId);
     }
 }

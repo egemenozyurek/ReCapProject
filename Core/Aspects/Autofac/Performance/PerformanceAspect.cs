@@ -1,10 +1,7 @@
 ﻿using Castle.DynamicProxy;
 using Core.IoC;
 using Core.Utilities.Interceptors;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Core.Aspects.Autofac.Performance

@@ -1,11 +1,12 @@
 ﻿using Business.Abstract;
-using Business.Constants;
+using Business.Constants.Messages;
+using Core.Aspects.Autofac.Caching;
+using Core.Aspects.Autofac.Transaction;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
-using System;
+using Entities.DTOs;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Business.Concrete
 {
@@ -17,38 +18,55 @@ namespace Business.Concrete
         {
             _customerDal = customerDal;
         }
+        public IDataResult<List<Customer>> GetAll()
+        {
+            return new SuccessDataResult<List<Customer>>(_customerDal.GetAll(), CustomerMessages.CustomerListed);
+        }
+        [CacheAspect(10)]
+        public IDataResult<Customer> GetCustomerByUserId(int userId)
+        {
+            var result = _customerDal.Get(c => c.UserId == userId);
+            if (result != null)
+            {
+                return new SuccessDataResult<Customer>(result, CustomerMessages.CustomerListed);
+            }
 
+            return new ErrorDataResult<Customer>(null, CustomerMessages.CustomerNotExist);
+        }
+        public IDataResult<List<Customer>> GetById(int id)
+        {
+            return new SuccessDataResult<List<Customer>>(_customerDal.GetAll(cu => cu.Id == id));
+        }
         public IResult Add(Customer customer)
         {
-            throw new NotImplementedException();
+            _customerDal.Add(customer);
+            return new SuccessResult(CustomerMessages.CustomerAdded);
         }
-
+        public IResult Update(Customer customer)
+        {
+            if (customer.Id > 0)
+            {
+                _customerDal.Update(customer);
+                return new SuccessResult(CustomerMessages.CustomerUpdate);
+            }
+            return new ErrorResult(CustomerMessages.CustomerIdNotSpace);
+        }
         public IResult Delete(Customer customer)
         {
             _customerDal.Delete(customer);
-            return new SuccessResult();
+            return new SuccessResult(CustomerMessages.CustomerDeleted);
         }
-
-        public IDataResult<List<Customer>> GetAll()
+        public IDataResult<List<CustomerDetailDto>> GetCustomerDetails()
         {
-            return new SuccessDataResult<List<Customer>>(_customerDal.GetAll());
+            return new SuccessDataResult<List<CustomerDetailDto>>(_customerDal.GetCustomerDetails(), CustomerMessages.CustomerListed);
         }
-
-        public IDataResult<Customer> GetById(int customerId)
+        [TransactionScopeAspect]
+        public IResult TransactionalOperation(Customer car)
         {
-            return new SuccessDataResult<Customer>(_customerDal.Get(c => c.Id == customerId));
-        }
+            _customerDal.Update(car);
+            _customerDal.Add(car);
+            return new SuccessResult(CustomerMessages.CustomerUpdate);
 
-        public IResult Insert(Customer customer)
-        {
-            _customerDal.Add(customer);
-            return new SuccessResult();
-        }
-
-        public IResult Update(Customer customer)
-        {
-            _customerDal.Update(customer);
-            return new SuccessResult();
         }
     }
 }
