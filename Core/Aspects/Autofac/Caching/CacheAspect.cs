@@ -1,19 +1,16 @@
 ﻿using Castle.DynamicProxy;
 using Core.CrossCuttingConcerns.Caching;
-using Core.IoC;
 using Core.Utilities.Interceptors;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
+using Core.Utilities.IoC;
 
 namespace Core.Aspects.Autofac.Caching
 {
     public class CacheAspect : MethodInterception
     {
         private int _duration;
-        private ICacheManager _cacheManager;
+        private readonly ICacheManager _cacheManager;
 
         public CacheAspect(int duration = 60)
         {

@@ -1,9 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Core.IoC
+namespace Core.Utilities.IoC
 {
     public static class ServiceTool
     {

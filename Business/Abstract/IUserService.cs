@@ -2,20 +2,18 @@
 using Core.Utilities.Results;
 using Entities.Concrete;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Abstract
 {
     public interface IUserService
     {
-        User GetByMail(string email);
-        IResult Add(User user);
-        IResult Update(User user);
+        Task<IDataResult<List<User>>> GetAll();
+        Task<IDataResult<User>> GetById(int userId);
+        Task<IDataResult<User>> GetByEmail(string email);
+        Task<IDataResult<List<OperationClaim>>> GetClaims(User user);
+        Task<IResult> Create(User user);
+        Task<IResult> Update(User user);
         IResult Delete(User user);
-        IDataResult<List<User>> GetAll();
-        IDataResult<List<User>> GetById(int id);
-        IDataResult<List<OperationClaim>> GetUserClaims(User user);
-        IDataResult<List<OperationClaim>> GetClaimsById(int userId);
-        IDataResult<User> GetByEmail(string email);
-        IResult TransactionalOperation(User user);
     }
 }

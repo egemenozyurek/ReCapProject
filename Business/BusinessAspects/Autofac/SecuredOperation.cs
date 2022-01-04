@@ -1,8 +1,6 @@
-﻿using System;
-using Business.Constants.Messages;
+﻿using Business.Constants;
 using Castle.DynamicProxy;
 using Core.Extensions;
-using Core.IoC;
 using Core.Utilities.Interceptors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +11,6 @@ namespace Business.BusinessAspects.Autofac
     public class SecuredOperation : MethodInterception
     {
         private string[] _roles;
-        //http istek yapıyoruz ya her bir kişi için httpcontext oluşturur
         private IHttpContextAccessor _httpContextAccessor;
 
         public SecuredOperation(string roles)
@@ -33,7 +30,7 @@ namespace Business.BusinessAspects.Autofac
                     return;
                 }
             }
-            throw new Exception(CarMessages.AuthorizationDenied);
+            throw new SecuredOperationException(Messages.AuthorizationDenied);
         }
     }
 }

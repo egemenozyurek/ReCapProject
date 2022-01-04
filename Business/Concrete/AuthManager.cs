@@ -1,17 +1,17 @@
 ﻿using Business.Abstract;
-using Business.Constants.Messages;
 using Core.Utilities.Results;
 using Core.Utilities.Security;
 using Core.Utilities.Security.JWT;
 using Entities.Concrete;
 using Entities.DTOs;
+using System.Threading.Tasks;
 
 namespace Business.Concrete
 {
     public class AuthManager : IAuthService
     {
-        private IUserService _userService;
-        private ITokenHelper _tokenHelper;
+        private readonly IUserService _userService;
+        private readonly ITokenHelper _tokenHelper;
 
         public AuthManager(IUserService userService, ITokenHelper tokenHelper)
         {
@@ -19,53 +19,63 @@ namespace Business.Concrete
             _tokenHelper = tokenHelper;
         }
 
-        public IDataResult<User> Register(UserForRegisterDto userForRegisterDto, string password)
+        public async Task<IDataResult<AccessToken>> CreateAccessToken(User user)
+        {
+            var claims = await _userService.GetClaims(user);
+            if (!claims.Success)
+            {
+                return new ErrorDataResult<AccessToken>(claims.Message);
+            }
+
+            var accessToken = _tokenHelper.CreateToken(user, claims.Data);
+            return new SuccessDataResult<AccessToken>(accessToken);
+        }
+
+        public async Task<IDataResult<User>> Login(UserForLoginDto userForLoginDto)
+        {
+            var checkUser = await _userService.GetByEmail(userForLoginDto.Email);
+            if (!checkUser.Success)
+            {
+                return new ErrorDataResult<User>(Constants.Messages.AuthMessages.AuthenticationFailed);
+            }
+
+            if (!HashingHelper.VerifyPasswordHash(userForLoginDto.Password, checkUser.Data.PasswordHash, checkUser.Data.PasswordSalt))
+            {
+                return new ErrorDataResult<User>(Constants.Messages.AuthMessages.AuthenticationFailed);
+            }
+
+            return new SuccessDataResult<User>(checkUser.Data, Constants.Messages.AuthMessages.AuthenticationSuccessful);
+        }
+
+        public async Task<IDataResult<User>> Register(UserForRegisterDto userForRegisterDto, string password)
         {
             byte[] passwordHash, passwordSalt;
-            HashingHelper.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-            var user = new User
+
+            HashingHelper.CreatePasswordHash(userForRegisterDto.Password, out passwordHash, out passwordSalt);
+
+            User user = new User
             {
-                Email = userForRegisterDto.Email,
                 FirstName = userForRegisterDto.FirstName,
                 LastName = userForRegisterDto.LastName,
+                Email = userForRegisterDto.Email,
                 PasswordHash = passwordHash,
                 PasswordSalt = passwordSalt,
                 Status = true
             };
-            _userService.Add(user);
-            return new SuccessDataResult<User>(user, UserMessages.UserRegistered);
+
+            IResult userRegisterResult = await _userService.Create(user);
+
+            return new DataResult<User>(user, userRegisterResult.Success, userRegisterResult.Message);
         }
 
-        public IDataResult<User> Login(UserForLoginDto userForLoginDto)
+        public async Task<IResult> UserExists(string email)
         {
-            var userToCheck = _userService.GetByMail(userForLoginDto.Email);
-            if (userToCheck == null)
+            var checkUser = await _userService.GetByEmail(email);
+            if (!checkUser.Success)
             {
-                return new ErrorDataResult<User>(UserMessages.UserNotFound);
-            }
-
-            if (!HashingHelper.VerifyPasswordHash(userForLoginDto.Password, userToCheck.PasswordHash, userToCheck.PasswordSalt))
-            {
-                return new ErrorDataResult<User>(UserMessages.PasswordError);
-            }
-
-            return new SuccessDataResult<User>(userToCheck, UserMessages.SuccessfulLogin);
-        }
-
-        public IResult UserExists(string email)
-        {
-            if (_userService.GetByMail(email) != null)
-            {
-                return new ErrorResult(UserMessages.UserAlreadyExists);
+                return new ErrorResult(Constants.Messages.UserMessages.UserIsNull);
             }
             return new SuccessResult();
-        }
-
-        public IDataResult<AccessToken> CreateAccessToken(User user)
-        {
-            var claims = _userService.GetUserClaims(user);
-            var accessToken = _tokenHelper.CreateToken(user, claims.Data);
-            return new SuccessDataResult<AccessToken>(accessToken, UserMessages.SuccessfulLogin);
         }
     }
 }

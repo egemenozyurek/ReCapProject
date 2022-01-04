@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace DataAccess.Concrete
 {
@@ -22,43 +23,50 @@ namespace DataAccess.Concrete
                 new Car{Id=5,BrandId=5,DailyPrice=150,ModelYear="2009",Description="Nissan-Sedan"},
             };
         }
+
         public void Add(Car car)
         {
             _cars.Add(car);
         }
 
-        public void Delete(Car car)
-        {
-            Car carToDelete = _cars.SingleOrDefault(c => c.Id == car.Id);
-            _cars.Remove(carToDelete);
-        }
-
-        public List<CarDetailDto> GetCarDetails(Expression<Func<CarDetailDto, bool>> filter = null)
-        {
-            return null;
-        }
-
-        public Car Get(Expression<Func<Car, bool>> filter = null)
+        public Task AddAsync(Car car)
         {
             throw new NotImplementedException();
         }
 
-        public List<Car> GetAll()
+        public void Delete(Car car)
         {
-            return _cars;
+            Car carToDelete = _cars.SingleOrDefault(x => x.Id == car.Id);
+
+            _cars.Remove(carToDelete);
+        }
+
+        public Car Get(Expression<Func<Car, bool>> filter)
+        {
+            return _cars.FirstOrDefault();
         }
 
         public List<Car> GetAll(Expression<Func<Car, bool>> filter = null)
         {
+            return _cars;
+        }
+
+        public Task<List<Car>> GetAllAsync(Expression<Func<Car, bool>> filter = null)
+        {
             throw new NotImplementedException();
         }
 
-        public List<Car> GetById(int brandId)
+        public Task<Car> GetAsync(Expression<Func<Car, bool>> filter)
         {
-            return _cars.Where(c => c.BrandId == brandId).ToList();
+            throw new NotImplementedException();
         }
 
-        public Car GetById(Expression<Func<Car, bool>> filter = null)
+        public CarDetailDto GetCarDetailById(Expression<Func<CarDetailDto, bool>> filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<CarDetailDto> GetCarDetailByIdAsync(Expression<Func<CarDetailDto, bool>> filter)
         {
             throw new NotImplementedException();
         }
@@ -68,28 +76,24 @@ namespace DataAccess.Concrete
             throw new NotImplementedException();
         }
 
-        public CarDetailDto GetCarDetailById(int id)
+        public Task<List<CarDetailDto>> GetCarDetailsAsync()
         {
-            return null;
-        }
-
-        public List<CarDetailDto> GetAllByColorId(int colorId)
-        {
-            return null;
-        }
-
-        public List<CarDetailDto> GetAllByBrandId(int brandId)
-        {
-            return null;
+            throw new NotImplementedException();
         }
 
         public void Update(Car car)
         {
-            Car carToUpdate = _cars.SingleOrDefault(c => c.Id == car.Id);
+            Car carToUpdate = _cars.SingleOrDefault(x => x.Id == car.Id);
             carToUpdate.BrandId = car.BrandId;
+            carToUpdate.ColorId = car.ColorId;
             carToUpdate.DailyPrice = car.DailyPrice;
-            carToUpdate.Description = car.Description;
             carToUpdate.ModelYear = car.ModelYear;
+            carToUpdate.Description = car.Description;
+        }
+
+        public Task UpdateAsync(Car entity)
+        {
+            throw new NotImplementedException();
         }
     }
 }

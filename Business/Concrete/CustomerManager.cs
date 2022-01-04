@@ -1,72 +1,55 @@
 ﻿using Business.Abstract;
-using Business.Constants.Messages;
-using Core.Aspects.Autofac.Caching;
-using Core.Aspects.Autofac.Transaction;
+using Business.Constants;
+using Business.Validations.FluentValidation;
+using Core.Aspects.Autofac.Validation;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
-using Entities.DTOs;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Concrete
 {
     public class CustomerManager : ICustomerService
     {
-        ICustomerDal _customerDal;
+        private readonly ICustomerDal _customerDal;
 
         public CustomerManager(ICustomerDal customerDal)
         {
             _customerDal = customerDal;
         }
-        public IDataResult<List<Customer>> GetAll()
-        {
-            return new SuccessDataResult<List<Customer>>(_customerDal.GetAll(), CustomerMessages.CustomerListed);
-        }
-        [CacheAspect(10)]
-        public IDataResult<Customer> GetCustomerByUserId(int userId)
-        {
-            var result = _customerDal.Get(c => c.UserId == userId);
-            if (result != null)
-            {
-                return new SuccessDataResult<Customer>(result, CustomerMessages.CustomerListed);
-            }
 
-            return new ErrorDataResult<Customer>(null, CustomerMessages.CustomerNotExist);
-        }
-        public IDataResult<List<Customer>> GetById(int id)
+        public async Task<IDataResult<List<Customer>>> GetAll()
         {
-            return new SuccessDataResult<List<Customer>>(_customerDal.GetAll(cu => cu.Id == id));
+            var data = await _customerDal.GetAllAsync();
+            return new SuccessDataResult<List<Customer>>(data);
         }
-        public IResult Add(Customer customer)
+
+        public async Task<IDataResult<Customer>> GetById(int customerId)
         {
-            _customerDal.Add(customer);
-            return new SuccessResult(CustomerMessages.CustomerAdded);
+            var data = await _customerDal.GetAsync(b => b.Id == customerId);
+            if (data is null) return new ErrorDataResult<Customer>(data, Messages.CustomerIsNull);
+            else return new SuccessDataResult<Customer>(data);
         }
-        public IResult Update(Customer customer)
+
+        [ValidationAspect(typeof(CustomerValidator))]
+        public async Task<IResult> Create(Customer customer)
         {
-            if (customer.Id > 0)
-            {
-                _customerDal.Update(customer);
-                return new SuccessResult(CustomerMessages.CustomerUpdate);
-            }
-            return new ErrorResult(CustomerMessages.CustomerIdNotSpace);
+            await _customerDal.AddAsync(customer);
+            return new SuccessResult(Messages.CustomerAdded);
         }
+
+        [ValidationAspect(typeof(CustomerValidator))]
+        public async Task<IResult> Update(Customer customer)
+        {
+            await _customerDal.UpdateAsync(customer);
+            return new SuccessResult(Messages.CustomerUpdated);
+        }
+
         public IResult Delete(Customer customer)
         {
             _customerDal.Delete(customer);
-            return new SuccessResult(CustomerMessages.CustomerDeleted);
-        }
-        public IDataResult<List<CustomerDetailDto>> GetCustomerDetails()
-        {
-            return new SuccessDataResult<List<CustomerDetailDto>>(_customerDal.GetCustomerDetails(), CustomerMessages.CustomerListed);
-        }
-        [TransactionScopeAspect]
-        public IResult TransactionalOperation(Customer car)
-        {
-            _customerDal.Update(car);
-            _customerDal.Add(car);
-            return new SuccessResult(CustomerMessages.CustomerUpdate);
-
+            return new SuccessResult(Messages.CustomerDeleted);
         }
     }
 }

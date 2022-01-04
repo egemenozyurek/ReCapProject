@@ -3,8 +3,6 @@ using Core.CrossCuttingConcerns.Validaton.FluentValidation;
 using Core.Utilities.Interceptors;
 using FluentValidation;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Core.Aspects.Autofac.Validation
 {

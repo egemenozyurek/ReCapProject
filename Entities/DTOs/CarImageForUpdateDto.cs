@@ -1,4 +1,5 @@
 ﻿using Core.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Entities.DTOs
 {
@@ -6,5 +7,6 @@ namespace Entities.DTOs
     {
         public int CarId { get; set; }
         public string Image { get; set; }
+        public IFormFile File { get; set; }
     }
 }

@@ -1,23 +1,26 @@
 ﻿using Core.CrossCuttingConcerns.Caching;
-using Core.CrossCuttingConcerns.Caching.Microsoft;
-using Core.IoC;
+using Core.CrossCuttingConcerns.Caching.Redis;
+using Core.Utilities.IoC;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace Core.DependencyResolvers
 {
     public class CoreModule : ICoreModule
     {
-        public void Load(IServiceCollection services)
+        public void Load(IServiceCollection serviceCollection)
         {
-            services.AddMemoryCache();
-            services.AddSingleton<ICacheManager, MemoryCacheManager>();
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddSingleton<Stopwatch>();
+            //serviceCollection.AddMemoryCache(); // .net'in kendisinin. .net core kendisi otomatik injection yapıyor.
+            //serviceCollection.AddDistributedMemoryCache();
+            serviceCollection.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = "localhost:6000";
+            });
+            serviceCollection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            //serviceCollection.AddSingleton<ICacheManager, MemoryCacheManager>();
+            serviceCollection.AddSingleton<ICacheManager, RedisCacheManager>();
+            serviceCollection.AddSingleton<Stopwatch>();
         }
     }
 }

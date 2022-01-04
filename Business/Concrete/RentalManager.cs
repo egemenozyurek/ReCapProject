@@ -1,98 +1,85 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Business.Abstract;
-using Business.Constants.Messages;
+﻿using Business.Abstract;
+using Business.Constants;
+using Business.ValidationRules.FluentValidation;
 using Business.Validations.FluentValidation;
-using Core.Aspects.Autofac.Transaction;
 using Core.Aspects.Autofac.Validation;
+using Core.Utilities.Business;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
 using Entities.DTOs;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Concrete
 {
     public class RentalManager : IRentalService
     {
-        IRentalDal _rentalDal;
+        private readonly IRentalDal _rentalDal;
 
         public RentalManager(IRentalDal rentalDal)
         {
             _rentalDal = rentalDal;
         }
-        public IDataResult<List<Rental>> GetAll()
-        {
-            return new SuccessDataResult<List<Rental>>(_rentalDal.GetAll(), RentalMessages.RentalListed);
-        }
-        public IDataResult<List<Rental>> GetById(int id)
-        {
-            return new SuccessDataResult<List<Rental>>(_rentalDal.GetAll(r => r.Id == id));
-        }
-        public IResult CheckReturnDate(int carId)
-        {
-            var result = _rentalDal.GetCarRentalDetails();
-            if (result.Count > 0)
-            {
-                return new ErrorResult(RentalMessages.RentalAddFailed);
-            }
-            return new SuccessResult(RentalMessages.RentalAdded);
-        }
-        public IResult UpdateReturnDate(Rental rental)
-        {
-            var result = _rentalDal.GetAll(p => p.Id == rental.Id);
-            var updateRental = result.LastOrDefault();
 
-            if (updateRental != null)
-            {
-                return new ErrorResult(RentalMessages.RentalUpdateFailed);
-            }
-
-            updateRental.ReturnDate = rental.ReturnDate;
-            _rentalDal.Update(updateRental);
-            return new SuccessResult(RentalMessages.RentalUpdate);
-        }
-        public IDataResult<List<CarRentalDetailDto>> GetRentalCarDetails()
+        public async Task<IDataResult<List<Rental>>> GetAll()
         {
-            return new SuccessDataResult<List<CarRentalDetailDto>>(_rentalDal.GetCarRentalDetails(), RentalMessages.RentalListed);
+            var data = await _rentalDal.GetAllAsync();
+            return new SuccessDataResult<List<Rental>>(data);
         }
+
+        public async Task<IDataResult<List<RentalDetailDto>>> GetRentalDetails()
+        {
+            var data = await _rentalDal.GetRentalDetailsAsync();
+            return new SuccessDataResult<List<RentalDetailDto>>(data);
+        }
+
+        public async Task<IDataResult<Rental>> GetById(int rentalId)
+        {
+            var data = await _rentalDal.GetAsync(b => b.Id == rentalId);
+            if (data is null) return new ErrorDataResult<Rental>(data, Messages.RentalIsNull);
+            else return new SuccessDataResult<Rental>(data);
+        }
+
         [ValidationAspect(typeof(RentalValidator))]
-        public IResult Add(Rental rental)
+        public async Task<IResult> Create(Rental rental)
         {
-            var result = CheckReturnDate(rental.CarId);
-            if (!result.Success && rental.ReturnDate < rental.RentDate)
+            IResult result = BusinessRuler.Run(CheckIsCarRentalable(rental.CarId, rental.RentDate));
+            if (result != null)
             {
-                return new ErrorResult(RentalMessages.RentalAddFailed);
+                return result;
             }
 
-            _rentalDal.Add(rental);
-            return new SuccessResult(RentalMessages.RentalAdded);
+            await _rentalDal.AddAsync(rental);
+            return new SuccessResult(Messages.RentalAdded);
         }
-        public IResult Update(Rental rental)
-        {
-            if (rental.Id! > 0)
-            {
-                return new ErrorResult(RentalMessages.RentalUpdateFailed);
-            }
 
-            _rentalDal.Update(rental);
-            return new SuccessResult(RentalMessages.RentalUpdate);
+        [ValidationAspect(typeof(RentalValidator))]
+        public async Task<IResult> Update(Rental rental)
+        {
+            await _rentalDal.UpdateAsync(rental);
+            return new SuccessResult(Messages.RentalUpdated);
         }
+
         public IResult Delete(Rental rental)
         {
-            if (rental.Id < 1)
+            _rentalDal.Delete(rental);
+            return new SuccessResult(Messages.RentalDeleted);
+        }
+
+        public IResult CheckIsCarRentalable(int carId, DateTime rentDate)
+        {
+            Rental getLastRental = _rentalDal.GetLastRentalByCarId(carId);
+            if (getLastRental != null)
             {
-                return new ErrorResult(RentalMessages.RentalDeleteFailed);
+                if ((!getLastRental.ReturnDate.HasValue) || (rentDate <= getLastRental.ReturnDate))
+                {
+                    return new ErrorResult(Messages.RentalAddedError);
+                }
             }
 
-            _rentalDal.Delete(rental);
-            return new SuccessResult(RentalMessages.RentalDeleted);
-        }
-        [TransactionScopeAspect]
-        public IResult TransactionalOperation(Rental rental)
-        {
-            _rentalDal.Update(rental);
-            _rentalDal.Add(rental);
-            return new SuccessResult(RentalMessages.RentalUpdate);
+            return new SuccessResult();
         }
     }
 }

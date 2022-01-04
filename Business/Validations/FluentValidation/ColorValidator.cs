@@ -7,8 +7,9 @@ namespace Business.Validations.FluentValidation
     {
         public ColorValidator()
         {
-            RuleFor(c => c.Name).NotNull();
-            RuleFor(co => co.Name).MinimumLength(2).WithMessage("Renk Adı Minimum 2 Harfli Olmalıdır.");
+            RuleFor(x => x.Name).NotEmpty();
+            RuleFor(x => x.Name).MinimumLength(2).WithMessage(Constants.Messages.ColorMessages.ColorNameMinLength);
+            RuleFor(x => x.Name).MaximumLength(255).WithMessage(Constants.Messages.ColorMessages.ColorNameMaxLength);
         }
     }
 }

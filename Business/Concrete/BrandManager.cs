@@ -1,85 +1,65 @@
 ﻿using Business.Abstract;
-using Business.Constants.Messages;
-using Business.Validations.FluentValidation;
-using Core.Aspects.Autofac.Transaction;
+using Business.BusinessAspects.Autofac;
+using Business.Constants;
+using Business.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Caching;
+using Core.Aspects.Autofac.Performance;
 using Core.Aspects.Autofac.Validation;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace Business.Concrete
 {
     public class BrandManager : IBrandService
     {
-        IBrandDal _brandDal;
+        private readonly IBrandDal _brandDal;
 
         public BrandManager(IBrandDal brandDal)
         {
             _brandDal = brandDal;
         }
-        //Tümünü getir
-        public IDataResult<List<Brand>> GetAll()
-        {
-            return new SuccessDataResult<List<Brand>>(_brandDal.GetAll(), BrandMessages.BrandListed);
-        }
-        //İşlemsel Operasyon
-        [TransactionScopeAspect]
-        public IResult TransactionalOperation(Brand brand)
-        {
-            _brandDal.Update(brand);
-            _brandDal.Add(brand);
-            return new SuccessResult(BrandMessages.BrandUpdate);
 
-        }
-        //Markaların Id sini getir
-        public IDataResult<Brand> GetById(int brandId)
-        {
-            return new SuccessDataResult<Brand>(_brandDal.Get(c => c.Id == brandId));
-        }
-        //Marka ekle
+        [SecuredOperation("Brand.Create,admin")]
         [ValidationAspect(typeof(BrandValidator))]
-        public IResult Add(Brand brand)
+        [CacheRemoveAspect("IBrandService.Get")]
+        public async Task<IResult> Create(Brand brand)
         {
-
-            _brandDal.Add(brand);
-            return new SuccessResult(BrandMessages.BrandAdded); ;
+            await _brandDal.AddAsync(brand);
+            return new SuccessResult(Messages.BrandAdded);
         }
-        //Marka sil
+
+        [SecuredOperation("Brand.Delete,admin")]
+        [CacheRemoveAspect("IBrandService.Get")]
         public IResult Delete(Brand brand)
         {
             _brandDal.Delete(brand);
-            return new SuccessResult(BrandMessages.BrandDeleted);
+            return new SuccessResult(Messages.BrandDeleted);
         }
-        //markayı güncelle
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<List<Brand>>> GetAll()
+        {
+            var data = await _brandDal.GetAllAsync();
+            return new SuccessDataResult<List<Brand>>(data);
+        }
+
+        public async Task<IDataResult<Brand>> GetById(int brandId)
+        {
+            var data = await _brandDal.GetAsync(b => b.Id == brandId);
+            if (data is null) return new ErrorDataResult<Brand>(data, Messages.BrandIsNull);
+            else return new SuccessDataResult<Brand>(data);
+        }
+
+        [SecuredOperation("Brand.Delete,admin")]
         [ValidationAspect(typeof(BrandValidator))]
-        public IResult Update(Brand brand)
+        [CacheRemoveAspect("IBrandService.Get")]
+        public async Task<IResult> Update(Brand brand)
         {
-            _brandDal.Update(brand);
-            return new SuccessResult(BrandMessages.BrandUpdate);
-        }
-
-
-        //Marka Adının Var Olup Olmadığını Kontrol Edin
-        private IResult CheckIfBrandNameExist(string brandName)
-        {
-            var result = _brandDal.GetAll(b => b.Name == brandName).Any();
-            if (result == true)
-            {
-                return new ErrorResult(BrandMessages.SameNameExist);
-            }
-            return new SuccessResult();
-        }
-        //Marka Varlığını Kontrol Edin
-        private IResult CheckBrandExist(int brandId)
-        {
-            var result = _brandDal.GetAll(b => b.Id == brandId).Any();
-            if (!result)
-            {
-                return new ErrorResult("marka bulunamadı.");
-            }
-            return new SuccessResult();
+            await _brandDal.UpdateAsync(brand);
+            return new SuccessResult(Messages.BrandUpdated);
         }
     }
 }

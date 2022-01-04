@@ -2,20 +2,20 @@
 using Entities.Concrete;
 using Entities.DTOs;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Abstract
 {
     public interface ICarService
     {
-        IResult Add(Car car);
-        IResult Update(Car car);
+        Task<IDataResult<List<Car>>> GetAll();
+        Task<IDataResult<List<Car>>> GetCarsByBrandId(int brandId);
+        Task<IDataResult<List<Car>>> GetCarsByColorId(int colorId);
+        Task<IDataResult<List<CarDetailDto>>> GetCarDetails();
+        Task<IDataResult<Car>> GetById(int carId);
+        Task<IDataResult<CarDetailDto>> GetCarDetailById(int carId);
+        Task<IResult> Create(Car car);
+        Task<IResult> Update(Car car);
         IResult Delete(Car car);
-        IDataResult<List<CarDetailDto>> GetAll();
-        IDataResult<Car> GetById(int carId);
-        IDataResult<List<CarDetailDto>> GetCarDetails();
-        IDataResult<CarDetailDto> GetCarDetailById(int id);
-        IDataResult<List<CarDetailDto>> GetAllByBrandId(int brandId);
-        IDataResult<List<CarDetailDto>> GetAllByColorId(int colorId);
-        IResult TransactionalOperation(Car car);
     }
 }

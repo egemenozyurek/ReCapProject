@@ -1,79 +1,83 @@
 ﻿using Business.Abstract;
-using Business.Constants.Messages;
-using Core.Aspects.Autofac.Transaction;
+using Business.BusinessAspects.Autofac;
+using Business.Constants;
+using Business.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Caching;
+using Core.Aspects.Autofac.Performance;
+using Core.Aspects.Autofac.Validation;
 using Core.Entities.Concrete;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Concrete
 {
     public class UserManager : IUserService
     {
-        IUserDal _userDal;
+        private readonly IUserDal _userDal;
 
         public UserManager(IUserDal userDal)
         {
             _userDal = userDal;
         }
 
-        public IDataResult<List<User>> GetAll()
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<List<User>>> GetAll()
         {
-            return new SuccessDataResult<List<User>>(_userDal.GetAll(), UserMessages.UserListed);
+            var data = await _userDal.GetAllAsync();
+            return new SuccessDataResult<List<User>>(data);
         }
 
-        public IDataResult<List<User>> GetById(int id)
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<User>> GetById(int userId)
         {
-            return new SuccessDataResult<List<User>>(_userDal.GetAll(u => u.Id == id), UserMessages.UserListed);
+            var data = await _userDal.GetAsync(b => b.Id == userId);
+            if (data is null) return new ErrorDataResult<User>(data, Messages.UserIsNull);
+            else return new SuccessDataResult<User>(data);
         }
 
-        public IDataResult<List<OperationClaim>> GetUserClaims(User user)
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<User>> GetByEmail(string email)
         {
-            return new SuccessDataResult<List<OperationClaim>>(_userDal.GetClaims(user) + "talepler listelendi");
+            var data = await _userDal.GetAsync(b => b.Email == email);
+            if (data is null) return new ErrorDataResult<User>(data, Messages.UserIsNull);
+            else return new SuccessDataResult<User>(data);
         }
 
-        public IDataResult<User> GetByEmail(string email)
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<List<OperationClaim>>> GetClaims(User user)
         {
-            return new SuccessDataResult<User>(_userDal.Get(u => u.Email == email));
+            var data = await _userDal.GetClaimsAsync(user);
+            return new SuccessDataResult<List<OperationClaim>>(data);
         }
 
-        [TransactionScopeAspect]
-        public IResult TransactionalOperation(User user)
+        [ValidationAspect(typeof(UserValidator))]
+        [CacheRemoveAspect("IUserService.Get")]
+        public async Task<IResult> Create(User user)
         {
-            _userDal.Update(user);
-            _userDal.Add(user);
-            return new SuccessResult(UserMessages.UserUpdate);
-
-        }
-        public IResult Add(User user)
-        {
-            if (user.FirstName.Length < 2)
-            {
-                return new ErrorResult(UserMessages.UserNameInvalid);
-            }
-            _userDal.Add(user);
-            return new SuccessResult(UserMessages.UserAdded);
+            await _userDal.AddAsync(user);
+            return new SuccessResult(Messages.UserAdded);
         }
 
-        public IResult Update(User user)
+        [ValidationAspect(typeof(UserValidator))]
+        [CacheRemoveAspect("IUserService.Get")]
+        public async Task<IResult> Update(User user)
         {
-            _userDal.Update(user);
-            return new SuccessResult(UserMessages.UserUpdate);
+            await _userDal.UpdateAsync(user);
+            return new SuccessResult(Messages.UserUpdated);
         }
 
+        [CacheRemoveAspect("IUserService.Get")]
         public IResult Delete(User user)
         {
             _userDal.Delete(user);
-            return new SuccessResult(UserMessages.UserDeleted);
-        }
-        public User GetByMail(string email)
-        {
-            return _userDal.Get(u => u.Email == email);
-        }
-        public IDataResult<List<OperationClaim>> GetClaimsById(int userId)
-        {
-            return new SuccessDataResult<List<OperationClaim>>(_userDal.GetClaimsByUserId(userId));
+            return new SuccessResult(Messages.UserDeleted);
         }
     }
 }

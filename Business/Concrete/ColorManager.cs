@@ -1,70 +1,68 @@
 ﻿using Business.Abstract;
-using Business.Constants.Messages;
+using Business.BusinessAspects.Autofac;
+using Business.Constants;
 using Business.Validations.FluentValidation;
-using Core.Aspects.Autofac.Transaction;
+using Core.Aspects.Autofac.Caching;
+using Core.Aspects.Autofac.Performance;
 using Core.Aspects.Autofac.Validation;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
-using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace Business.Concrete
 {
     public class ColorManager : IColorService
     {
-        IColorDal _colorDal;
+        private readonly IColorDal _colorDal;
 
         public ColorManager(IColorDal colorDal)
         {
             _colorDal = colorDal;
         }
-        public IDataResult<List<Color>> GetAll()
-        {
-            if (DateTime.Now.Hour == 23)
-            {
-                return new ErrorDataResult<List<Color>>(ColorMessages.MaintenanceTime);
-            }
-            return new SuccessDataResult<List<Color>>(_colorDal.GetAll(), ColorMessages.ColorListed);
-        }
-        public IDataResult<Color> GetById(int colorId)
-        {
-            return new SuccessDataResult<Color>(_colorDal.Get(co => co.Id == colorId));
-        }
-        [ValidationAspect(typeof(ColorValidator))]
-        public IResult Add(Color color)
-        {
 
-            _colorDal.Add(color);
-            return new SuccessResult(ColorMessages.ColorAdded);
-        }
-        public IResult Update(Color color)
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<List<Color>>> GetAll()
         {
-            _colorDal.Update(color);
-            return new SuccessResult(ColorMessages.ColorUpdate);
+            var data = await _colorDal.GetAllAsync();
+            return new SuccessDataResult<List<Color>>(data);
         }
+
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<Color>> GetById(int colorId)
+        {
+            var data = await _colorDal.GetAsync(b => b.Id == colorId);
+            if (data is null) return new ErrorDataResult<Color>(data, Messages.ColorIsNull);
+            else return new SuccessDataResult<Color>(data);
+        }
+
+        [SecuredOperation("Color.Create,admin")]
+        [ValidationAspect(typeof(CarValidator))]
+        [CacheRemoveAspect("IColorService.Get")]
+        public async Task<IResult> Create(Color color)
+        {
+            await _colorDal.AddAsync(color);
+            return new SuccessResult(Messages.ColorAdded);
+        }
+
+        [SecuredOperation("Color.Update,admin")]
+        [ValidationAspect(typeof(CarValidator))]
+        [CacheRemoveAspect("IColorService.Get")]
+        public async Task<IResult> Update(Color color)
+        {
+            await _colorDal.UpdateAsync(color);
+            return new SuccessResult(Messages.ColorUpdated);
+        }
+
+        [SecuredOperation("Color.Delete,admin")]
+        [CacheRemoveAspect("IColorService.Get")]
         public IResult Delete(Color color)
         {
             _colorDal.Delete(color);
-            return new SuccessResult(ColorMessages.ColorDeleted);
-        }
-        [TransactionScopeAspect]
-        public IResult TransactionalOperation(Color color)
-        {
-            _colorDal.Update(color);
-            _colorDal.Add(color);
-            return new SuccessResult(ColorMessages.ColorUpdate);
-
-        }
-        private IResult CheckIfColorNameExist(string colorName)
-        {
-            var result = _colorDal.GetAll(c => c.Name == colorName).Any();
-            if (result)
-            {
-                return new ErrorResult();
-            }
-            return new SuccessResult();
+            return new SuccessResult(Messages.ColorDeleted);
         }
     }
 }

@@ -1,45 +1,61 @@
-﻿using System;
+﻿using Core.Utilities.Exceptions;
+using FluentValidation;
+using FluentValidation.Results;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using FluentValidation;
-using Microsoft.AspNetCore.Http;
 
 namespace Core.Extensions
 {
     public class ExceptionMiddleware
     {
-        private RequestDelegate _requestDelegate;
+        private RequestDelegate _next;
 
-        public ExceptionMiddleware(RequestDelegate requestDelegate)
+        public ExceptionMiddleware(RequestDelegate next)
         {
-            _requestDelegate = requestDelegate;
+            _next = next;
         }
 
         public async Task InvokeAsync(HttpContext httpContext)
         {
             try
             {
-                await _requestDelegate(httpContext);
+                await _next(httpContext);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-
-                await HandleExceptionAsync(httpContext, e);
+                await HandleExceptionAsync(httpContext, ex);
             }
         }
 
-        private Task HandleExceptionAsync(HttpContext httpContext, Exception e)
+        private static async Task HandleExceptionAsync(HttpContext httpContext, Exception ex)
         {
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
             string message = "Internal Server Error";
-            if (e.GetType() == typeof(ValidationException))
+            IEnumerable<ValidationFailure> errors;
+            if (ex.GetType() == typeof(ValidationException))
             {
-                message = e.Message;
+                message = ex.Message;
+                errors = ((ValidationException)ex).Errors;
+                httpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+
+                await httpContext.Response.WriteAsync(new ValidationErrorDetails
+                {
+                    StatusCode = httpContext.Response.StatusCode,
+                    Message = message,
+                    ValidationErrors = errors
+                }.ToString());
+            }
+            else if (ex.GetType() == typeof(SecuredOperationException))
+            {
+                message = ex.Message;
             }
 
-            return httpContext.Response.WriteAsync(new ErrorDetails
+            await httpContext.Response.WriteAsync(new ErrorDetails
             {
                 StatusCode = httpContext.Response.StatusCode,
                 Message = message

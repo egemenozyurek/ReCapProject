@@ -1,7 +1,11 @@
 ﻿using Business.Abstract;
-using Business.Constants.Messages;
+using Business.BusinessAspects.Autofac;
+using Business.Constants;
 using Business.Validations.FluentValidation;
+using Core.Aspects.Autofac.Caching;
+using Core.Aspects.Autofac.Performance;
 using Core.Aspects.Autofac.Validation;
+using Core.CrossCuttingConcerns.FileManager;
 using Core.Utilities.Business;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
@@ -9,108 +13,110 @@ using Entities.Concrete;
 using Entities.DTOs;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Concrete
 {
     public class CarImageManager : ICarImageService
     {
-        ICarImageDal _carImageDal;
-        IUploadService _uploadService;
+        private readonly ICarImageDal _carImageDal;
+        private readonly IFileManager _fileManager;
 
-        public CarImageManager(ICarImageDal carImageDal, IUploadService uploadService)
+        public CarImageManager(ICarImageDal carImageDal, IFileManager fileManager)
         {
             _carImageDal = carImageDal;
-            _uploadService = uploadService;
+            _fileManager = fileManager;
         }
-        //resim ekle
-        [ValidationAspect(typeof(CarImagesValidator))]
-        public IResult Add(CarImageForAddDto carImageForAddDto)
+
+        [SecuredOperation("CarImage.Create,admin")]
+        [ValidationAspect(typeof(CarImageCreateDtoValidator))]
+        [CacheRemoveAspect("ICarImageService.Get")]
+        public async Task<IResult> Create(CarImageForAddDto carImageForAddDto)
         {
-            IResult result = BusinessRuler.Run(
-                CheckIfCarImageLimit(carImageForAddDto.CarId)
-            );
+            IResult result = BusinessRuler.Run(CheckCarImageCount(carImageForAddDto.CarId));
             if (result != null)
             {
                 return result;
             }
 
-            CarImage carImage = new CarImage();
-            carImage.CarId = carImageForAddDto.CarId;
-            carImage.ImagePath = _uploadService.AddFromBase64(carImageForAddDto.Image);
-            carImage.Date = DateTime.Now;
-            _carImageDal.Add(carImage);
-            return new SuccessResult(CarImagesMessages.CarImageAdded);
-        }
-        //resim sil
-        [ValidationAspect(typeof(CarImagesValidator))]
-        public IResult Delete(int id)
-        {
-            var carImage = _carImageDal.Get(c => c.Id == id);
-            if (carImage == null) return new ErrorResult();
-            _uploadService.Remove(carImage.ImagePath);
-            _carImageDal.Delete(carImage);
-            return new SuccessResult(CarImagesMessages.CarImageDeleted);
-        }
-        //resim güncelle
-        [ValidationAspect(typeof(CarImagesValidator))]
-        public IResult Update(CarImageForUpdateDto carImageForUpdateDto)
-        {
-            var carImage = _carImageDal.Get(c => c.Id == carImageForUpdateDto.CarId);
-            string newPath = _uploadService.UpdateFromBase64(carImage.ImagePath, carImageForUpdateDto.Image);
-            carImage.ImagePath = newPath;
-            carImage.Date = DateTime.Now;
-            _carImageDal.Update(carImage);
-            return new SuccessResult(CarImagesMessages.CarImageUpdated);
+            IDataResult<(DateTime date, string fileName)> uploadedFileResult = await _fileManager.UploadFileAsync(carImageForAddDto.File);
+            if (!uploadedFileResult.Success)
+            {
+                return new ErrorResult(uploadedFileResult.Message);
+            }
+
+            await _carImageDal.AddAsync(new CarImage
+            {
+                CarId = carImageForAddDto.CarId,
+                ImagePath = uploadedFileResult.Data.fileName,
+                Date = uploadedFileResult.Data.date
+            });
+            return new SuccessResult(Messages.CarImageAdded);
         }
 
-        //resimlerin car-id lerini getir
-        public IDataResult<List<CarImage>> GetAllByCarId(int carId)
+        [SecuredOperation("CarImage.Delete,admin")]
+        [CacheRemoveAspect("ICarImageService.Get")]
+        public IResult Delete(CarImage carImage)
         {
-            var result = BusinessRuler.Run(CheckCarImage(carId));
-            if (result != null)
+            IResult deleteFileResult = _fileManager.DeleteFile(carImage.ImagePath);
+            _carImageDal.Delete(carImage);
+            return new SuccessResult($"{Messages.CarImageDeleted} -> {deleteFileResult.Message}");
+        }
+
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<List<CarImage>>> GetAll(int carId)
+        {
+            var data = await _carImageDal.GetAllAsync(c => c.CarId == carId);
+            if (data.Count == 0)
             {
-                return new ErrorDataResult<List<CarImage>>(GetDefaultImage(carId).Data);
+                data = new List<CarImage>
+                {
+                    new CarImage { CarId= carId, ImagePath="/images/logo.png", Date = System.DateTime.Now}
+                };
             }
-            return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll(c => c.CarId == carId));
+            return new SuccessDataResult<List<CarImage>>(data);
         }
-        //resimlerin idlerini getir
-        public IDataResult<CarImage> GetByImageId(int imageId)
+
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public async Task<IDataResult<CarImage>> GetById(int carImageId)
         {
-            return new SuccessDataResult<CarImage>(_carImageDal.Get(c => c.Id == imageId));
-        }
-        //resimlerin hepsini listele
-        public IDataResult<List<CarImage>> GetAll()
-        {
-            return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll());
-        }
-        //CarImage Limitini Kontrol Edin
-        private IResult CheckIfCarImageLimit(int carId)
-        {
-            var result = _carImageDal.GetAll(c => c.CarId == carId).Count;
-            if (result >= 5)
+            var data = await _carImageDal.GetAsync(c => c.Id == carImageId);
+            if (data is null)
             {
-                return new ErrorResult();
+                return new ErrorDataResult<CarImage>(data, Messages.CarImageIsNull);
+            }
+            else
+            {
+                return new SuccessDataResult<CarImage>(data);
+            }
+        }
+
+        [SecuredOperation("admin,CarImage.Update")]
+        [ValidationAspect(typeof(CarImageForUpdateDtoValidator))]
+        [CacheRemoveAspect("ICarImageService.Get")]
+        public async Task<IResult> Update(CarImage carImage, CarImageForUpdateDto carImageForUpdateDto)
+        {
+            IDataResult<(DateTime date, string fileName)> updatedFileResult = await _fileManager.UpdateFileAsync(carImageForUpdateDto.File, carImage.ImagePath);
+            if (!updatedFileResult.Success)
+            {
+                return new ErrorResult(updatedFileResult.Message);
+            }
+
+            carImage.ImagePath = updatedFileResult.Data.fileName;
+            await _carImageDal.UpdateAsync(carImage);
+            return new SuccessResult(Messages.CarImageUpdated);
+        }
+
+        private IResult CheckCarImageCount(int carId)
+        {
+            var count = _carImageDal.GetAll(c => c.CarId == carId).Count;
+            if (count >= 5)
+            {
+                return new ErrorResult(Messages.CarImageMustBeMaximumFiveImage);
             }
             return new SuccessResult();
         }
-        //Varsayılan Resmi Al
-        private IDataResult<List<CarImage>> GetDefaultImage(int carId)
-        {
-
-            List<CarImage> carImage = new List<CarImage>();
-            carImage.Add(new CarImage { CarId = carId, Date = DateTime.Now, ImagePath = "DefaultImage.jpg" });
-            return new SuccessDataResult<List<CarImage>>(carImage);
-        }
-        //CarImage'ı Kontrol Et
-        private IResult CheckCarImage(int carId)
-        {
-            var result = _carImageDal.GetAll(c => c.CarId == carId).Count;
-            if (result > 0)
-            {
-                return new SuccessResult();
-            }
-            return new ErrorResult();
-        }
-
     }
 }

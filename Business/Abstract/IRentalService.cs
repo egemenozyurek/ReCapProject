@@ -1,20 +1,20 @@
 ﻿using Core.Utilities.Results;
 using Entities.Concrete;
 using Entities.DTOs;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Abstract
 {
     public interface IRentalService
     {
-        IResult Add(Rental user);
-        IResult Update(Rental user);
-        IResult Delete(Rental user);
-        IDataResult<List<Rental>> GetAll();
-        IDataResult<List<Rental>> GetById(int id);
-        IDataResult<List<CarRentalDetailDto>> GetRentalCarDetails();
-        IResult CheckReturnDate(int carId);
-        IResult UpdateReturnDate(Rental rental);
-        IResult TransactionalOperation(Rental rental);
+        Task<IDataResult<List<Rental>>> GetAll();
+        Task<IDataResult<List<RentalDetailDto>>> GetRentalDetails();
+        Task<IDataResult<Rental>> GetById(int rentalId);
+        Task<IResult> Create(Rental rental);
+        Task<IResult> Update(Rental rental);
+        IResult Delete(Rental rental);
+        IResult CheckIsCarRentalable(int carId, DateTime rentDate);
     }
 }
